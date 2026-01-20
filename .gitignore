@@ -1,1 +1,9 @@
 .agent
+# Build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Publish outputs
+**/publish/
