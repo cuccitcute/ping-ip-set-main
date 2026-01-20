@@ -7,3 +7,6 @@ obj/
 
 # Publish outputs
 **/publish/
+
+*.exe
+*.dll
