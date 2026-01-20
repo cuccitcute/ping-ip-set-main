@@ -1,0 +1,8 @@
+d:\HIEU\Tool\Ping monitor\Publish\PingMonitor.pdb
+d:\HIEU\Tool\Ping monitor\Publish\D3DCompiler_47_cor3.dll
+d:\HIEU\Tool\Ping monitor\Publish\PenImc_cor3.dll
+d:\HIEU\Tool\Ping monitor\Publish\PresentationNative_cor3.dll
+d:\HIEU\Tool\Ping monitor\Publish\vcruntime140_cor3.dll
+d:\HIEU\Tool\Ping monitor\Publish\wpfgfx_cor3.dll
+d:\HIEU\Tool\Ping monitor\Publish\e_sqlite3.dll
+d:\HIEU\Tool\Ping monitor\Publish\PingMonitor.exe

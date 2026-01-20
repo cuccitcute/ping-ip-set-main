@@ -1,0 +1,4 @@
+D:\my-sr-project\ping-ip-set\obj\Debug\net6.0-windows\PingMonitor.GeneratedMSBuildEditorConfig.editorconfig
+D:\my-sr-project\ping-ip-set\obj\Debug\net6.0-windows\PingMonitor.AssemblyInfoInputs.cache
+D:\my-sr-project\ping-ip-set\obj\Debug\net6.0-windows\PingMonitor.AssemblyInfo.cs
+D:\my-sr-project\ping-ip-set\obj\Debug\net6.0-windows\PingMonitor.csproj.CoreCompileInputs.cache
