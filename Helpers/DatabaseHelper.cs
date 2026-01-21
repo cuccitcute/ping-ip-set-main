@@ -407,6 +407,13 @@ namespace PingMonitor.Helpers
                                 if (int.TryParse(value, out int threshold))
                                     settings.OfflineThreshold = threshold;
                                 break;
+                            case "Language":
+                                if (int.TryParse(value, out int lang))
+                                    settings.Language = lang;
+                                break;
+                            case "IsDarkMode":
+                                settings.IsDarkMode = value == "1" || value.ToLower() == "true";
+                                break;
                         }
                     }
                 }
@@ -426,6 +433,8 @@ namespace PingMonitor.Helpers
                 SaveSetting(connection, "PingRetryCount", settings.PingRetryCount.ToString());
                 SaveSetting(connection, "OfflineThreshold", settings.OfflineThreshold.ToString());
                 SaveSetting(connection, "AutoRefresh", settings.AutoRefresh ? "1" : "0");
+                SaveSetting(connection, "Language", settings.Language.ToString());
+                SaveSetting(connection, "IsDarkMode", settings.IsDarkMode ? "1" : "0");
             }
         }
 
