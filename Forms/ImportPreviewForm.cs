@@ -7,20 +7,62 @@ namespace PingMonitor.Forms
 {
     public class ImportPreviewForm : Form
     {
-        public DataTable ResultData { get; private set; } // Dữ liệu đã xử lý để trả về
+        public DataTable ResultData { get; private set; } 
         private DataTable _originalData;
         private DataGridView dgvPreview;
         private Label lblStatus;
         private Button btnImport;
         private Button btnCancel;
         private CheckBox chkFirstRowHeader;
+        private Panel panelTop;
+        private Panel panelBottom;
 
         public ImportPreviewForm(DataTable data, string fileName)
         {
             _originalData = data;
-            ResultData = data.Copy(); // Mặc định là copy
+            ResultData = data.Copy(); 
             InitializeComponent(fileName);
+            
+            Services.ThemeService.OnThemeChanged += ApplyTheme;
+            this.FormClosed += (s, e) => Services.ThemeService.OnThemeChanged -= ApplyTheme;
+            ApplyTheme();
+            
             LoadData();
+        }
+
+        private void ApplyTheme()
+        {
+            var isDark = Services.ThemeService.IsDarkMode;
+            this.BackColor = Services.ThemeService.Background;
+            
+            if (panelTop != null) panelTop.BackColor = Services.ThemeService.Background;
+            if (panelBottom != null) panelBottom.BackColor = Services.ThemeService.Surface;
+
+            if (lblStatus != null) lblStatus.ForeColor = Services.ThemeService.TextMain;
+            if (chkFirstRowHeader != null) chkFirstRowHeader.ForeColor = Services.ThemeService.TextMain;
+
+            if (dgvPreview != null)
+            {
+                dgvPreview.BackgroundColor = Services.ThemeService.Background;
+                dgvPreview.DefaultCellStyle.BackColor = Services.ThemeService.Surface;
+                dgvPreview.DefaultCellStyle.ForeColor = Services.ThemeService.TextMain;
+                dgvPreview.DefaultCellStyle.SelectionBackColor = Services.ThemeService.Selection;
+                dgvPreview.DefaultCellStyle.SelectionForeColor = Color.White;
+                
+                dgvPreview.ColumnHeadersDefaultCellStyle.BackColor = Services.ThemeService.BrandColor;
+                dgvPreview.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            }
+            
+            if (btnCancel != null)
+            {
+                btnCancel.BackColor = Services.ThemeService.BtnSecondary;
+                btnCancel.ForeColor = Color.White;
+            }
+            if (btnImport != null)
+            {
+                btnImport.BackColor = Services.ThemeService.BtnSuccess;
+                btnImport.ForeColor = Color.White;
+            }
         }
 
         private void InitializeComponent(string fileName)
@@ -28,21 +70,19 @@ namespace PingMonitor.Forms
             this.Text = $"Preview Import - {fileName}";
             this.Size = new Size(1000, 650);
             this.StartPosition = FormStartPosition.CenterParent;
-            this.BackColor = Color.FromArgb(240, 240, 245);
             this.Font = new Font("Segoe UI", 9F);
 
             // ======================
             // TOP PANEL
             // ======================
-            var panelTop = new Panel { Dock = DockStyle.Top, Height = 50, Padding = new Padding(15, 10, 15, 10) };
+            panelTop = new Panel { Dock = DockStyle.Top, Height = 50, Padding = new Padding(15, 10, 15, 10) };
             
             lblStatus = new Label 
             { 
                 Text = $"Tìm thấy {_originalData?.Rows.Count ?? 0} hàng.", 
                 AutoSize = true, 
                 Location = new Point(15, 15),
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(33, 37, 41)
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold)
             };
             panelTop.Controls.Add(lblStatus);
 
@@ -51,8 +91,7 @@ namespace PingMonitor.Forms
                 Text = "Dòng đầu tiên là tiêu đề",
                 AutoSize = true,
                 Location = new Point(300, 16),
-                Checked = true, // Default to true
-                ForeColor = Color.FromArgb(33, 37, 41),
+                Checked = true, 
                 Cursor = Cursors.Hand
             };
             chkFirstRowHeader.CheckedChanged += (s, e) => ReloadGrid();
@@ -63,11 +102,10 @@ namespace PingMonitor.Forms
             // ======================
             // BOTTOM PANEL (BUTTONS)
             // ======================
-            var panelBottom = new Panel 
+            panelBottom = new Panel 
             { 
                 Dock = DockStyle.Bottom, 
                 Height = 60, 
-                BackColor = Color.White, // Nền trắng cho nổi bật
                 Padding = new Padding(10)
             };
             
@@ -85,8 +123,6 @@ namespace PingMonitor.Forms
             { 
                 Text = "Hủy bỏ", 
                 Size = new Size(100, 35), 
-                BackColor = Color.FromArgb(108, 117, 125), 
-                ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
                 DialogResult = DialogResult.Cancel,
@@ -99,11 +135,10 @@ namespace PingMonitor.Forms
             { 
                 Text = "Xác nhận Import", 
                 Size = new Size(140, 35), 
-                BackColor = Color.FromArgb(46, 125, 50), 
+                BackColor = Services.ThemeService.BtnSuccess, 
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
-                // DialogResult = DialogResult.OK, // Xử lý thủ công để process data trước
                 Margin = new Padding(0)
             };
             btnImport.FlatAppearance.BorderSize = 0;
@@ -119,7 +154,6 @@ namespace PingMonitor.Forms
             dgvPreview = new DataGridView
             {
                 Dock = DockStyle.Fill,
-                BackgroundColor = Color.White,
                 BorderStyle = BorderStyle.None,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
@@ -128,17 +162,13 @@ namespace PingMonitor.Forms
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
             };
             
-            // Style grid
+            // Style grid (Initial defaults, will be partly overridden by ApplyTheme)
             dgvPreview.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle { 
-                BackColor = Color.FromArgb(230, 232, 235), 
-                ForeColor = Color.Black, 
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                 Padding = new Padding(5)
             };
             dgvPreview.DefaultCellStyle = new DataGridViewCellStyle { 
-                Padding = new Padding(5),
-                SelectionBackColor = Color.FromArgb(179, 229, 252),
-                SelectionForeColor = Color.Black
+                Padding = new Padding(5)
             };
             dgvPreview.EnableHeadersVisualStyles = false;
 

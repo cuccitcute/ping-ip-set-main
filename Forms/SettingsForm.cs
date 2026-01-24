@@ -31,6 +31,9 @@ namespace PingMonitor.Forms
             _loc.SetLanguage(settings.Language);
 
             InitializeUI();
+            
+            ThemeService.OnThemeChanged += ApplyTheme;
+            this.FormClosed += (s, e) => ThemeService.OnThemeChanged -= ApplyTheme;
         }
 
         private void InitializeUI()
@@ -40,7 +43,8 @@ namespace PingMonitor.Forms
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-            this.BackColor = ThemeService.Background;
+            // Use SidebarBg (Contrast vs Table) instead of Main Background
+            this.BackColor = ThemeService.IsDarkMode ? ThemeService.Background : ThemeService.SidebarBg;
             this.ForeColor = ThemeService.TextMain;
 
             int padding = 20;
@@ -61,7 +65,8 @@ namespace PingMonitor.Forms
                 Location = new Point(cx, gy - 3), 
                 Size = new Size(150, 25), 
                 DropDownStyle = ComboBoxStyle.DropDownList, 
-                BackColor = ThemeService.Surface, 
+                // Contrast Input Background
+                BackColor = ThemeService.Background, 
                 ForeColor = ThemeService.TextMain,
                 FlatStyle = FlatStyle.Popup // Better visibility
             };
@@ -125,7 +130,8 @@ namespace PingMonitor.Forms
         private void CreateNumericRow(GroupBox parent, string label, ref NumericUpDown num, int val, int min, int max, int lx, int cx, ref int y)
         {
             parent.Controls.Add(new Label { Text = label, Location = new Point(lx, y), AutoSize = true, ForeColor = ThemeService.TextMain, Font = new Font("Segoe UI", 9F, FontStyle.Regular) });
-            num = new NumericUpDown { Location = new Point(cx, y - 3), Size = new Size(100, 25), Minimum = min, Maximum = max, Value = Math.Max(min, Math.Min(max, val)), BackColor = ThemeService.Surface, ForeColor = ThemeService.TextMain };
+            // Contrast Input Background
+            num = new NumericUpDown { Location = new Point(cx, y - 3), Size = new Size(100, 25), Minimum = min, Maximum = max, Value = Math.Max(min, Math.Min(max, val)), BackColor = ThemeService.Background, ForeColor = ThemeService.TextMain };
             parent.Controls.Add(num);
             y += 35;
         }
@@ -142,6 +148,48 @@ namespace PingMonitor.Forms
             settings.OfflineThreshold = (int)numOfflineThreshold.Value;
 
             db.SaveSettings(settings);
+
+            // Trigger Global Theme Change
+            ThemeService.SetMode(settings.IsDarkMode);
+        }
+
+        private void ApplyTheme()
+        {
+            this.BackColor = ThemeService.IsDarkMode ? ThemeService.Background : ThemeService.SidebarBg;
+            this.ForeColor = ThemeService.TextMain;
+
+            // Helper to update specific controls if found
+            foreach (Control c in this.Controls)
+            {
+                UpdateControlTheme(c);
+            }
+        }
+
+        private void UpdateControlTheme(Control c)
+        {
+            if (c is GroupBox gb)
+            {
+                gb.ForeColor = ThemeService.BtnPrimary;
+                foreach (Control child in gb.Controls) UpdateControlTheme(child);
+            }
+            else if (c is Label lbl)
+            {
+                lbl.ForeColor = ThemeService.TextMain;
+            }
+            else if (c is CheckBox chk)
+            {
+                chk.ForeColor = ThemeService.TextMain;
+            }
+            else if (c is NumericUpDown num)
+            {
+                num.BackColor = ThemeService.Background;
+                num.ForeColor = ThemeService.TextMain;
+            }
+            else if (c is ComboBox cbo)
+            {
+                cbo.BackColor = ThemeService.Background;
+                cbo.ForeColor = ThemeService.TextMain;
+            }
         }
     }
 }

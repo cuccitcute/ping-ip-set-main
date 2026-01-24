@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 
 namespace PingMonitor.Services
@@ -6,34 +7,54 @@ namespace PingMonitor.Services
     {
         public static bool IsDarkMode { get; private set; } = false;
 
+        public static event Action OnThemeChanged;
+
         public static void SetMode(bool isDark)
         {
             IsDarkMode = isDark;
+            OnThemeChanged?.Invoke();
         }
 
-        // Palette
-        // Dark Navy (Slate 900) as requested for Main Brand Color
-        public static Color BrandColor => Color.FromArgb(15, 23, 42); 
-        public static Color BrandColorLight => Color.FromArgb(51, 65, 85); // Slate 700 for accents
-        private static Color BrandSurface => Color.FromArgb(30, 41, 59); // Slate 800 for containers/table
+        // Core Palette
+        private static Color Slate900 => Color.FromArgb(15, 23, 42); 
+        private static Color Slate800 => Color.FromArgb(30, 41, 59); 
+        private static Color Slate700 => Color.FromArgb(51, 65, 85); 
+        private static Color Slate100 => Color.FromArgb(241, 245, 249);
+        private static Color Slate200 => Color.FromArgb(226, 232, 240);
+        private static Color PureWhite => Color.White;
+        private static Color Slate50 => Color.FromArgb(248, 250, 252);
 
-        // Mapping "Light Mode" to Dark Navy as the default look
-        public static Color Background => BrandSurface; // #1e293b (Content is Lighter than Sidebar)
-        public static Color Surface => BrandSurface;  // #1e293b (Table Rows match Content BG)
-        public static Color SurfaceAlt => BrandColor; // #0f172a
+        // Dynamic Semantic Colors
+        public static Color BrandColor => Slate900; 
         
-        public static Color TextMain => Color.FromArgb(241, 245, 249); // Slate 100 (White-ish)
-        public static Color TextMuted => Color.FromArgb(148, 163, 184); // Slate 400
+        // Backgrounds
+        public static Color Background => IsDarkMode ? Slate800 : PureWhite;
+        public static Color Surface => IsDarkMode ? Slate800 : PureWhite;
         
-        public static Color Border => Color.FromArgb(51, 65, 85); // Slate 700
-        public static Color Selection => Color.FromArgb(59, 130, 246); // Blue 500
+        public static Color SidebarBg => IsDarkMode ? Slate900 : Slate100;
+        public static Color SidebarText => IsDarkMode ? Slate100 : Slate900;
+        
+        public static Color HeaderBg => IsDarkMode ? Slate800 : PureWhite;
+        public static Color HeaderText => IsDarkMode ? Slate100 : Slate900;
+        
+        // Legacy/Alias needed for build
+        public static Color SurfaceAlt => IsDarkMode ? BrandColor : Slate50; 
+        public static Color BrandColorLight => IsDarkMode ? Slate700 : Slate200;
+
+        // Text
+        public static Color TextMain => IsDarkMode ? Slate100 : Slate900;
+        public static Color TextMuted => IsDarkMode ? Color.FromArgb(148, 163, 184) : Color.FromArgb(100, 116, 139);
+        
+        // UI Elements
+        public static Color Border => IsDarkMode ? Slate700 : Slate200;
+        public static Color Selection => Color.FromArgb(59, 130, 246);
         
         // Status
-        public static Color OnlineBg => Color.FromArgb(6, 78, 59);      // Green 900
-        public static Color OnlineText => Color.FromArgb(110, 231, 183); // Green 300
+        public static Color OnlineBg => IsDarkMode ? Color.FromArgb(6, 78, 59) : Color.FromArgb(209, 250, 229);
+        public static Color OnlineText => IsDarkMode ? Color.FromArgb(110, 231, 183) : Color.FromArgb(6, 95, 70);
         
-        public static Color OfflineBg => Color.FromArgb(127, 29, 29);   // Red 900
-        public static Color OfflineText => Color.FromArgb(252, 165, 165); // Red 300
+        public static Color OfflineBg => IsDarkMode ? Color.FromArgb(127, 29, 29) : Color.FromArgb(254, 226, 226);
+        public static Color OfflineText => IsDarkMode ? Color.FromArgb(252, 165, 165) : Color.FromArgb(153, 27, 27);
 
         // Buttons (Static)
         public static Color BtnPrimary => Color.FromArgb(37, 99, 235);        // Royal Blue
@@ -41,5 +62,6 @@ namespace PingMonitor.Services
         public static Color BtnDanger => Color.FromArgb(239, 68, 68);         // Red
         public static Color BtnWarning => Color.FromArgb(245, 158, 11);       // Amber
         public static Color BtnSecondary => Color.FromArgb(107, 114, 128);    // Gray
+        public static Color BtnPing => Color.FromArgb(6, 182, 212);           // Cyan
     }
 }

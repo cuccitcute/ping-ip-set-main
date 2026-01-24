@@ -21,6 +21,7 @@ namespace PingMonitor
         private DataGridView dgvMonitor;
         private SplitContainer splitContainer;
         private Panel panelSidebar;
+        private Panel panelTopBar; // Promoted from local
         private Panel panelToolbar; 
         private Label lblSidebarTitle;
         private Button btnToggleSidebar;
@@ -31,13 +32,16 @@ namespace PingMonitor
         private Button btnSettings;
         private Label btnLogText; // Changed to Label/Link style
         private Button btnAdd;
-        private Button btnRemove;
-        private Button btnClearAll;
-        private Button btnPingNow;
+        // private Button btnRemove; // Removed
+        // private Button btnClearAll; // Removed
+        // private Button btnPingNow; // Removed
         private Button btnImport;
         private Button btnExport;
         private TextBox txtSearch;
-        private Panel panelSearch;
+        private Panel panelSearch; // Use this class field!
+        private Label lblSearchPlaceholder; // Promote
+        private Label lblSearchIcon; // Promote
+        private FlowLayoutPanel panelStats; // Promoted from local
         private ContextMenuStrip contextMenu;
         private Label lblDbInfo;
         private ProgressBar progressBar;
@@ -51,9 +55,9 @@ namespace PingMonitor
         private Label lblOnlineTitle;
         private Label lblOfflineTitle;
 
-        private Label lblSearchPlaceholder;
+
         private Label lblDateTime;
-        private ComboBox cboLanguage;
+        // private ComboBox cboLanguage; // Removed
         private int currentLanguageIndex = 0;
         private int unreadLogCount = 0;
         private int sortColumnIndex = -1;
@@ -138,19 +142,19 @@ namespace PingMonitor
         private void InitializeTopBar()
         {
             // Use Centralized Brand Color
-            var headerColor = ThemeService.BrandColor;
+            var headerColor = ThemeService.HeaderBg; // Use HeaderBg
             
-            var panelTitle = new Panel
+            panelTopBar = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 60,
                 BackColor = headerColor, 
                 Padding = new Padding(20, 0, 20, 0)
             };
-            this.Controls.Add(panelTitle);
+            this.Controls.Add(panelTopBar);
 
             var border = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Color.FromArgb(30, 41, 59) }; // Slate 800
-            panelTitle.Controls.Add(border);
+            panelTopBar.Controls.Add(border);
 
             var iconPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "icon.png");
             if (File.Exists(iconPath))
@@ -162,56 +166,56 @@ namespace PingMonitor
                     SizeMode = PictureBoxSizeMode.Zoom,
                     Image = Image.FromFile(iconPath)
                 };
-                panelTitle.Controls.Add(picIcon);
+                panelTopBar.Controls.Add(picIcon);
             }
 
             lblTitle = new Label
             {
                 Text = _loc.Get("Title"),
-                ForeColor = Color.White, // White text on dark header
+                ForeColor = ThemeService.HeaderText, // Dynamic Header Text
                 Font = new Font("Segoe UI", 18F, FontStyle.Bold),
                 AutoSize = true,
                 Location = new Point(60, 12)
             };
-            panelTitle.Controls.Add(lblTitle);
+            panelTopBar.Controls.Add(lblTitle);
 
             lblSubLabel = new Label
             {
                 Text = _loc.Get("SubTitle"),
-                ForeColor = Color.FromArgb(148, 163, 184), // Slate 400
+                ForeColor = ThemeService.TextMuted, // Dynamic Muted Text
                 Font = new Font("Segoe UI", 9F),
                 AutoSize = true,
                 Location = new Point(64, 42)
             };
-            panelTitle.Controls.Add(lblSubLabel);
+            panelTopBar.Controls.Add(lblSubLabel);
             
             lblDateTime = new Label
             {
                 Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
-                ForeColor = Color.FromArgb(148, 163, 184), // Slate 400
+                ForeColor = ThemeService.TextMuted, // Dynamic Muted Text
                 Font = new Font("Consolas", 10F, FontStyle.Bold),
                 AutoSize = true,
-                Location = new Point(panelTitle.Width - 200, 12), // Moved up slightly
+                Location = new Point(panelTopBar.Width - 200, 12), // Moved up slightly
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
-            panelTitle.Controls.Add(lblDateTime);
+            panelTopBar.Controls.Add(lblDateTime);
 
             // Log Link
             btnLogText = new Label
             {
                 Text = "Log",
-                ForeColor = Color.White,
+                ForeColor = ThemeService.HeaderText,
                 Font = new Font("Segoe UI", 9F, FontStyle.Underline),
                 AutoSize = true,
                 Cursor = Cursors.Hand,
-                Location = new Point(panelTitle.Width - 60, 32), // Below Time
+                Location = new Point(panelTopBar.Width - 60, 32), // Below Time
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             btnLogText.Click += BtnViewLogs_Click;
-            panelTitle.Controls.Add(btnLogText);
+            panelTopBar.Controls.Add(btnLogText);
 
             // === NEW SEARCH BAR (CENTERED) ===
-            var searchPanel = new Panel
+            panelSearch = new Panel // Use class field
             {
                 Height = 35, // Taller pill shape
                 Width = 400,
@@ -219,45 +223,53 @@ namespace PingMonitor
                 Anchor = AnchorStyles.Top 
             };
             // Initial centering
-            searchPanel.Location = new Point((panelTitle.Width - searchPanel.Width) / 2, (panelTitle.Height - searchPanel.Height) / 2);
-            panelTitle.Controls.Add(searchPanel);
-            
-            searchPanel.Tag = "HeaderSearch";
+            void CenterSearch()
+            {
+                if(panelTopBar != null && panelSearch != null)
+                    panelSearch.Location = new Point((panelTopBar.Width - panelSearch.Width) / 2, (panelTopBar.Height - panelSearch.Height) / 2);
+            }
+            CenterSearch();
+            this.Resize += (s, e) => CenterSearch();
 
-            // Color Strategy: Lighter shade of the header color.
-            Color pillColor = ThemeService.BrandColorLight; 
+            panelTopBar.Controls.Add(panelSearch);
+            
+            panelSearch.Tag = "HeaderSearch";
+
+            // Color Strategy: Use dynamic Theme properties in Paint/ApplyTheme
+            // Color pillColor = ThemeService.BrandColorLight; // Removing local var to force dynamic usage
 
             // Custom Paint for Rounded Background
-            searchPanel.Paint += (s, e) =>
+            panelSearch.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (var brush = new SolidBrush(pillColor))
+                // Use BrandColorLight (Slate200/Slate700) for the pill background
+                using (var brush = new SolidBrush(ThemeService.BrandColorLight)) 
                 {
-                    var rect = new Rectangle(0, 0, searchPanel.Width - 1, searchPanel.Height - 1);
+                    var rect = new Rectangle(0, 0, panelSearch.Width - 1, panelSearch.Height - 1);
                     var path = Helpers.DrawingHelper.GetRoundedPath(rect, 16);
                     e.Graphics.FillPath(brush, path);
                 }
             };
             
             // Search Icon (Left)
-            var lblSearchIcon = new Label
+            lblSearchIcon = new Label
             {
                 Text = Services.IconHelper.Search, 
                 Font = new Font(Services.IconHelper.FontName, 12F),
-                ForeColor = Color.FromArgb(203, 213, 225), // Slate 300
+                ForeColor = ThemeService.TextMuted, // Dynamic Icon Color
                 AutoSize = true,
-                BackColor = pillColor, // Match pill solid color
+                BackColor = ThemeService.BrandColorLight, // Initial dynamic color (updated in ApplyTheme)
                 Location = new Point(10, 8),
                 Cursor = Cursors.IBeam
             };
-            searchPanel.Controls.Add(lblSearchIcon);
+            panelSearch.Controls.Add(lblSearchIcon);
 
             // Search Text Box
             txtSearch = new TextBox
             {
                 BorderStyle = BorderStyle.None,
-                BackColor = pillColor, // Match pill solid color to simulate "transparent" look on dark header
-                ForeColor = Color.White,
+                BackColor = ThemeService.BrandColorLight, // Initial dynamic color
+                ForeColor = ThemeService.IsDarkMode ? Color.White : ThemeService.TextMain, // Initial Text Color
                 Font = new Font("Segoe UI", 10F),
                 Location = new Point(35, 8),
                 Width = 330
@@ -266,26 +278,26 @@ namespace PingMonitor
             txtSearch.TextChanged += (s, e) => {
                 lblSearchPlaceholder.Visible = string.IsNullOrEmpty(txtSearch.Text);
                 // Show/Hide Clear Button
-                var btnClear = searchPanel.Controls.OfType<Label>().FirstOrDefault(c => c.Tag?.ToString() == "Clear");
+                var btnClear = panelSearch.Controls.OfType<Label>().FirstOrDefault(c => c.Tag?.ToString() == "Clear");
                 if (btnClear != null) btnClear.Visible = !string.IsNullOrEmpty(txtSearch.Text);
                 
                 FilterGridBySearch(txtSearch.Text.Trim().ToLower());
             };
-            searchPanel.Controls.Add(txtSearch);
+            panelSearch.Controls.Add(txtSearch);
 
             // Placeholder
             lblSearchPlaceholder = new Label
             {
                 Text = "Tìm kiếm IP, người dùng...",
-                ForeColor = Color.FromArgb(148, 163, 184), // Slate 400 (Muted text)
+                ForeColor = ThemeService.TextMuted, // Dynamic Muted Text
                 Font = new Font("Segoe UI", 10F, FontStyle.Italic),
                 AutoSize = true,
-                BackColor = pillColor,
+                BackColor = ThemeService.BrandColorLight,
                 Location = new Point(35, 8),
                 Cursor = Cursors.IBeam
             };
             lblSearchPlaceholder.Click += (s, e) => txtSearch.Focus();
-            searchPanel.Controls.Add(lblSearchPlaceholder);
+            panelSearch.Controls.Add(lblSearchPlaceholder);
             lblSearchPlaceholder.BringToFront(); 
             
             lblSearchIcon.Click += (s, e) => txtSearch.Focus();
@@ -295,19 +307,19 @@ namespace PingMonitor
             {
                 Text = "\uE711", // Segoe MDL2 'X'
                 Font = new Font("Segoe MDL2 Assets", 10F), 
-                ForeColor = Color.White,
+                ForeColor = ThemeService.IsDarkMode ? Color.White : ThemeService.TextMain,
                 AutoSize = true,
-                BackColor = pillColor,
-                Location = new Point(searchPanel.Width - 30, 9),
+                BackColor = ThemeService.BrandColorLight,
+                Location = new Point(panelSearch.Width - 30, 9),
                 Cursor = Cursors.Hand,
                 Visible = false,
                 Tag = "Clear"
             };
             btnClearSearch.Click += (s, e) => { txtSearch.Text = ""; txtSearch.Focus(); };
-            searchPanel.Controls.Add(btnClearSearch);
+            panelSearch.Controls.Add(btnClearSearch);
             btnClearSearch.BringToFront();
 
-            this.Tag = searchPanel; 
+            this.Tag = panelSearch; 
         }
 
         private void InitializeCombinedToolbar(Control parent)
@@ -315,15 +327,35 @@ namespace PingMonitor
             panelToolbar = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 50, // Slightly taller for the pill buttons
+                Height = 60,
                 BackColor = COLOR_BACKGROUND,
                 Padding = new Padding(10, 5, 10, 5)
             };
             parent.Controls.Add(panelToolbar);
 
-            int x = 10;
-            int h = 36; // Defaut height for header buttons
-            int y = (panelToolbar.Height - h) / 2;
+            // Left Flow Panel
+            var flowLeft = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill, // Fill the space not taken by Right panel
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = false,
+                BackColor = Color.Transparent, // Fix: Ensure transparency so panelToolbar color shows
+                Padding = new Padding(0, 10, 0, 0) // Vertical center alignment approx
+            };
+            
+            // Right Flow Panel
+            var flowRight = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                WrapContents = false,
+                BackColor = Color.Transparent, // Fix: Ensure transparency
+                Padding = new Padding(0, 10, 5, 0)
+            };
+            panelToolbar.Controls.Add(flowRight);
+            panelToolbar.Controls.Add(flowLeft); // Add Left second regarding Z-order/Dock? No, Dock Right first, then Fill works.
 
             // Helper to configure Pill/Rounded buttons
             void ConfigurePillButton(Button btn, Color bgColor, string icon, Func<int> badgeProvider = null)
@@ -354,7 +386,6 @@ namespace PingMonitor
                     var textSize = g.MeasureString(text, btn.Font);
                     int contentWidth = 20 + (int)textSize.Width;
                     int startX = (btn.Width - contentWidth) / 2;
-                    // Centering calculation
                     int startY = (btn.Height - (int)Math.Max(textSize.Height, 20)) / 2;
 
                     using (var brush = new SolidBrush(Color.White))
@@ -383,95 +414,82 @@ namespace PingMonitor
                 };
             }
 
+            int h = 36;
+
             // 1. Toggle Sidebar
-            btnToggleSidebar = CreateButton("", ThemeService.BtnSecondary, new Point(x, y), new Size(35, h), IconHelper.GlobalNavButton);
+            btnToggleSidebar = CreateButton("", ThemeService.BtnSecondary, Point.Empty, new Size(35, h), IconHelper.GlobalNavButton);
             btnToggleSidebar.Click += (s, e) => { splitContainer.Panel1Collapsed = !splitContainer.Panel1Collapsed; };
-            // Make it transparent/ghosty to blend in
             btnToggleSidebar.BackColor = Color.Transparent;
             btnToggleSidebar.ForeColor = ThemeService.TextMuted;
-            btnToggleSidebar.FlatAppearance.MouseDownBackColor = Color.FromArgb(20, 255, 255, 255);
-            btnToggleSidebar.FlatAppearance.MouseOverBackColor = Color.FromArgb(10, 255, 255, 255);
-            panelToolbar.Controls.Add(btnToggleSidebar);
-            x += 45;
+            btnToggleSidebar.Margin = new Padding(0, 0, 10, 0);
+            flowLeft.Controls.Add(btnToggleSidebar);
 
-            // 2. Import CSV (Ghost Style) - Moved to Left
-            string importText = _loc.Get("Import");
-            var btnImportHeader = new Button
+        
+            // 2. Add Device
+            string addText = _loc.Get("Add");
+            btnAdd = new Button
             {
-                Text = "", // Hide default text to prevent overlap
+                Size = new Size(130, h),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Tag = addText,
+                Margin = new Padding(0, 0, 10, 0)
+            };
+            ConfigurePillButton(btnAdd, ThemeService.BtnPrimary, IconHelper.Add);
+            btnAdd.Click += BtnAdd_Click;
+            flowLeft.Controls.Add(btnAdd);
+
+             // 2. Import CSV (Ghost Style)
+            string importText = _loc.Get("Import");
+            btnImport = new Button // Use class field
+            {
+                Text = "",
                 Size = new Size(110, h),
-                Location = new Point(x, y),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.Transparent,
                 ForeColor = ThemeService.TextMain,
                 Font = new Font("Segoe UI", 9F, FontStyle.Regular),
                 Cursor = Cursors.Hand,
-                Tag = importText // Store for reference if needed
+                Tag = importText,
+                Margin = new Padding(0, 0, 10, 0)
             };
-            btnImportHeader.FlatAppearance.BorderSize = 0;
-            btnImportHeader.FlatAppearance.MouseDownBackColor = Color.FromArgb(30, 255, 255, 255);
-            btnImportHeader.FlatAppearance.MouseOverBackColor = Color.FromArgb(10, 255, 255, 255);
+            btnImport.FlatAppearance.BorderSize = 0;
+            // Ghost Hover Effect
+            // Initial set - will be updated by ApplyTheme
+            btnImport.FlatAppearance.MouseDownBackColor = Color.FromArgb(30, 255, 255, 255);
+            btnImport.FlatAppearance.MouseOverBackColor = Color.FromArgb(10, 255, 255, 255);
             
-            btnImportHeader.Paint += (s, e) => {
+            btnImport.Paint += (s, e) => {
                  var g = e.Graphics;
-                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
                  g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
                  var iconFont = new Font(Services.IconHelper.FontName, 10F);
-                 using (var brush = new SolidBrush(btnImportHeader.ForeColor))
+                 var text = btnImport.Tag?.ToString() ?? "";
+                 
+                 using (var brush = new SolidBrush(btnImport.ForeColor))
                  {
                     // Draw Icon
-                    g.DrawString(IconHelper.Import, iconFont, brush, 0, 9);
+                    g.DrawString(Services.IconHelper.Import, iconFont, brush, 0, 9);
                     // Draw Text
-                    g.DrawString(importText, btnImportHeader.Font, brush, 25, 9);
+                    g.DrawString(text, btnImport.Font, brush, 25, 9);
                  }
             };
-            btnImportHeader.Click += BtnImport_Click;
-            panelToolbar.Controls.Add(btnImportHeader);
-            x += 115;
+            btnImport.Click += BtnImport_Click;
+            flowLeft.Controls.Add(btnImport);
 
-            // 3. Add Device (Primary Blue Pill)
-            // 3. Add Device (Primary Blue Pill)
-            string addText = _loc.Get("Add");
-            btnAdd = new Button
-            {
-                Size = new Size(130, h),
-                Location = new Point(x, y),
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Tag = addText
-            };
-            ConfigurePillButton(btnAdd, Color.FromArgb(59, 130, 246), IconHelper.Add);
-            btnAdd.Click += BtnAdd_Click;
-            panelToolbar.Controls.Add(btnAdd);
-            
-            // Old buttons (Remove, ClearAll, Ping etc) are GONE.
+            // === RIGHT PANEL (Already defined above) ===
+            // Adding Export button to flowRight
 
-            // === RIGHT PANEL ===
-            var flowRight = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                WrapContents = false,
-                Padding = new Padding(0, 5, 5, 0)
-            };
-            panelToolbar.Controls.Add(flowRight);
-
-
-
-
-
-            // Export (Moved to Right Panel)
-            btnExport = new Button { Size = new Size(100, h), Tag = _loc.Get("Export"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
-            btnExport.Click += BtnExport_Click;
-            btnExport.Margin = new Padding(2, 0, 5, 0);
+            // Export
+            btnExport = new Button { Size = new Size(100, h), Tag = _loc.Get("Export"), Font = new Font("Segoe UI", 9F, FontStyle.Bold), Margin = new Padding(5, 0, 5, 0) };
             ConfigurePillButton(btnExport, ThemeService.BtnSuccess, IconHelper.Export);
+            btnExport.Click += BtnExport_Click;
             flowRight.Controls.Add(btnExport);
 
             // Settings
-            btnSettings = new Button { Size = new Size(100, h), Tag = _loc.Get("Settings"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
-            btnSettings.Click += BtnSettings_Click;
-            btnSettings.Margin = new Padding(2, 0, 2, 0);
+            btnSettings = new Button { Size = new Size(100, h), Tag = _loc.Get("Settings"), Font = new Font("Segoe UI", 9F, FontStyle.Bold), Margin = new Padding(0, 0, 0, 0) };
             ConfigurePillButton(btnSettings, ThemeService.BtnSecondary, IconHelper.Settings);
+            btnSettings.Click += BtnSettings_Click;
             flowRight.Controls.Add(btnSettings);
         }
 
@@ -481,72 +499,187 @@ namespace PingMonitor
             if (splitContainer != null) {
                 splitContainer.BackColor = COLOR_BACKGROUND;
                 // Sidebar: Always Dark Navy (BrandColor)
-                if (panelSidebar != null) panelSidebar.BackColor = ThemeService.BrandColor;
+            // Sidebar
+            if (panelSidebar != null)
+            {
+                panelSidebar.BackColor = ThemeService.SidebarBg;
+            }
+            if (lbUsers != null)
+            {
+                lbUsers.BackColor = ThemeService.SidebarBg;
+                lbUsers.ForeColor = ThemeService.SidebarText;
+            }
+            
             }
             
             // Toolbar
-            if (panelToolbar != null) panelToolbar.BackColor = ThemeService.BrandColorLight; // or Surface
+            if (panelToolbar != null) panelToolbar.BackColor = COLOR_BACKGROUND;
 
             // Add full recursive update if needed, for now just key panels
             if (dgvMonitor != null)
             {
-                dgvMonitor.BackgroundColor = COLOR_BACKGROUND; // Deep Dark
+                dgvMonitor.BackgroundColor = COLOR_BACKGROUND; 
                 dgvMonitor.GridColor = COLOR_BORDER;
-                dgvMonitor.DefaultCellStyle.BackColor = COLOR_SURFACE; // Slate 800
-                dgvMonitor.DefaultCellStyle.ForeColor = COLOR_TEXT_MAIN; // White
-                // Selection: Darker, softer Slate Blue
-                dgvMonitor.DefaultCellStyle.SelectionBackColor = ThemeService.BrandColorLight; 
+                dgvMonitor.DefaultCellStyle.BackColor = COLOR_SURFACE; 
+                dgvMonitor.DefaultCellStyle.ForeColor = COLOR_TEXT_MAIN; 
+                dgvMonitor.DefaultCellStyle.SelectionBackColor = ThemeService.Selection; 
                 dgvMonitor.DefaultCellStyle.SelectionForeColor = Color.White;
                 
-                // Header: Dark Navy (Same as App Header)
-                dgvMonitor.ColumnHeadersDefaultCellStyle.BackColor = ThemeService.BrandColor; 
-                dgvMonitor.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+                // Header
+                dgvMonitor.ColumnHeadersDefaultCellStyle.BackColor = ThemeService.IsDarkMode ? ThemeService.BrandColor : ThemeService.BrandColorLight; 
+                dgvMonitor.ColumnHeadersDefaultCellStyle.ForeColor = ThemeService.IsDarkMode ? Color.White : ThemeService.TextMain;
                 dgvMonitor.EnableHeadersVisualStyles = false;
             }
             // Update labels
-            if (lblTitle != null) lblTitle.ForeColor = Color.White; // Keep White
-            if (lblSubLabel != null) lblSubLabel.ForeColor = COLOR_TEXT_MUTED;
+            if (lblTitle != null) lblTitle.ForeColor = ThemeService.HeaderText;
+            if (lblSubLabel != null) lblSubLabel.ForeColor = ThemeService.TextMuted;
+            if (btnImport != null) 
+            {
+                btnImport.ForeColor = ThemeService.TextMain;
+                // Fix Hover visibility in Light Mode (White on White is invisible)
+                var hoverColor = ThemeService.IsDarkMode ? Color.FromArgb(10, 255, 255, 255) : Color.FromArgb(10, 0, 0, 0);
+                var downColor = ThemeService.IsDarkMode ? Color.FromArgb(30, 255, 255, 255) : Color.FromArgb(30, 0, 0, 0);
+                
+                btnImport.FlatAppearance.MouseOverBackColor = hoverColor;
+                btnImport.FlatAppearance.MouseDownBackColor = downColor;
+
+                // Force repaint to fix any potential stuck graphics
+                btnImport.Invalidate(); 
+            }
             
+            // Search Bar Updates
+            if (panelSearch != null)
+            {
+                 panelSearch.Invalidate(); // Repaint pill background
+                 var pillColor = ThemeService.BrandColorLight;
+                 
+                 if (txtSearch != null)
+                 {
+                     txtSearch.BackColor = pillColor;
+                     txtSearch.ForeColor = ThemeService.IsDarkMode ? Color.White : ThemeService.TextMain;
+                 }
+                 if (lblSearchIcon != null)
+                 {
+                     lblSearchIcon.BackColor = pillColor;
+                     lblSearchIcon.ForeColor = ThemeService.TextMuted;
+                 }
+                 if (lblSearchPlaceholder != null)
+                 {
+                     lblSearchPlaceholder.BackColor = pillColor;
+                     lblSearchPlaceholder.ForeColor = ThemeService.TextMuted;
+                 }
+                 // Fix Clear Button (find by Tag)
+                 var btnClear = panelSearch.Controls.OfType<Label>().FirstOrDefault(c => c.Tag?.ToString() == "Clear");
+                 if (btnClear != null)
+                 {
+                     btnClear.BackColor = pillColor;
+                     btnClear.ForeColor = ThemeService.IsDarkMode ? Color.White : ThemeService.TextMain;
+                 }
+            }
+            
+            // Header Panel
+            if (panelTopBar != null) panelTopBar.BackColor = ThemeService.HeaderBg;
+            
+            // Force redraw of Sidebar ListBox
+            if (lbUsers != null) lbUsers.Invalidate();
+            
+            // Stats Bar
+            if (panelStats != null)
+            {
+                panelStats.BackColor = ThemeService.Background;
+                foreach(Control c in panelStats.Controls)
+                {
+                    if (c is Panel p)
+                    {
+                        p.BackColor = ThemeService.Surface; // Update stat box background
+                        // Bar color (control 0) doesn't change usually (Primary/Ping/Delete) or maybe it should?
+                        // Labels are handled below via fields
+                    }
+                }
+            }
+            if (lblTotalTitle != null) lblTotalTitle.ForeColor = ThemeService.TextMuted;
+            if (lblOnlineTitle != null) lblOnlineTitle.ForeColor = ThemeService.TextMuted;
+            if (lblOfflineTitle != null) lblOfflineTitle.ForeColor = ThemeService.TextMuted;
+            
+            if (lblTotal != null) lblTotal.ForeColor = ThemeService.TextMain;
+            if (lblOnline != null) lblOnline.ForeColor = ThemeService.OnlineText;
+            if (lblOffline != null) lblOffline.ForeColor = ThemeService.OfflineText;
+
+            // DataGridView Alternating Rows & Refresh
+            if (dgvMonitor != null)
+            {
+                dgvMonitor.BackgroundColor = COLOR_BACKGROUND;
+                dgvMonitor.GridColor = ThemeService.Border;
+                
+                // Explicitly set colors without relying on proxies if possible to ensure correctness
+                var surfaceColor = ThemeService.IsDarkMode ? Color.FromArgb(30, 41, 59) : Color.White; // Slate800 / White
+                var altColor = ThemeService.IsDarkMode ? Color.FromArgb(15, 23, 42) : Color.FromArgb(248, 250, 252); // Slate900 / Slate50
+                var textColor = ThemeService.IsDarkMode ? Color.FromArgb(241, 245, 249) : Color.FromArgb(15, 23, 42); // Slate100 / Slate900
+
+                dgvMonitor.DefaultCellStyle.BackColor = surfaceColor;
+                dgvMonitor.DefaultCellStyle.ForeColor = textColor;
+                dgvMonitor.DefaultCellStyle.SelectionBackColor = ThemeService.Selection;
+                dgvMonitor.DefaultCellStyle.SelectionForeColor = Color.White;
+                
+                dgvMonitor.AlternatingRowsDefaultCellStyle.BackColor = altColor;
+                dgvMonitor.AlternatingRowsDefaultCellStyle.ForeColor = textColor;
+                dgvMonitor.AlternatingRowsDefaultCellStyle.SelectionBackColor = ThemeService.Selection;
+                dgvMonitor.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.White;
+
+                // Header matches HeaderBg (Dark: Slate800, Light: White)
+                dgvMonitor.ColumnHeadersDefaultCellStyle.BackColor = ThemeService.HeaderBg; 
+                dgvMonitor.ColumnHeadersDefaultCellStyle.ForeColor = ThemeService.HeaderText;
+                
+                dgvMonitor.Refresh();
+            }
+
             this.Invalidate(true);
         }
 
         private void InitializeStatsBar(Control parent)
         {
-            var panelStats = new Panel
+            panelStats = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 70,
+                Height = 70, // Keep height
                 BackColor = COLOR_BACKGROUND,
-                Padding = new Padding(10, 5, 10, 5)
+                Padding = new Padding(10, 8, 10, 5),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false
             };
             parent.Controls.Add(panelStats);
 
-            int x = 10;
-            
-            var pTotal = new Panel { Width = 180, Height = 55, Location = new Point(x, 8), BackColor = COLOR_SURFACE };
-            pTotal.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 4, BackColor = COLOR_PRIMARY });
-            lblTotalTitle = new Label { Text = _loc.Get("Total"), ForeColor = COLOR_TEXT_MUTED, Font = new Font("Segoe UI", 8F, FontStyle.Bold), Location = new Point(12, 6), AutoSize = true };
-            pTotal.Controls.Add(lblTotalTitle);
-            lblTotal = new Label { Text = "0", Font = new Font("Segoe UI", 18F, FontStyle.Bold), ForeColor = COLOR_TEXT_MAIN, Location = new Point(12, 24), AutoSize = true };
-            pTotal.Controls.Add(lblTotal);
+            // Helper to create stat box
+            Panel CreateStatBox(string title, string value, Color barColor, Color valueColor)
+            {
+                var p = new Panel { Width = 160, Height = 50, BackColor = COLOR_SURFACE, Margin = new Padding(0, 0, 15, 0) };
+                p.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 4, BackColor = barColor });
+                
+                var lblT = new Label { Text = title, ForeColor = COLOR_TEXT_MUTED, Font = new Font("Segoe UI", 8F, FontStyle.Bold), Location = new Point(12, 6), AutoSize = true };
+                p.Controls.Add(lblT);
+                
+                var lblV = new Label { Text = value, Font = new Font("Segoe UI", 16F, FontStyle.Bold), ForeColor = valueColor, Location = new Point(10, 20), AutoSize = true };
+                p.Controls.Add(lblV);
+                
+                return p;
+            }
+
+            // Total
+            var pTotal = CreateStatBox(_loc.Get("Total"), "0", COLOR_PRIMARY, COLOR_TEXT_MAIN);
+            lblTotalTitle = pTotal.Controls[1] as Label;
+            lblTotal = pTotal.Controls[2] as Label;
             panelStats.Controls.Add(pTotal);
-            x += 190;
 
-            var pOnline = new Panel { Width = 150, Height = 55, Location = new Point(x, 8), BackColor = COLOR_SURFACE };
-            pOnline.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 4, BackColor = COLOR_BTN_PING }); 
-            lblOnlineTitle = new Label { Text = _loc.Get("Online"), ForeColor = COLOR_TEXT_MUTED, Font = new Font("Segoe UI", 8F, FontStyle.Bold), Location = new Point(12, 6), AutoSize = true };
-            pOnline.Controls.Add(lblOnlineTitle);
-            lblOnline = new Label { Text = "0", Font = new Font("Segoe UI", 18F, FontStyle.Bold), ForeColor = COLOR_ONLINE_TEXT, Location = new Point(12, 24), AutoSize = true };
-            pOnline.Controls.Add(lblOnline);
+            // Online
+            var pOnline = CreateStatBox(_loc.Get("Online"), "0", COLOR_BTN_PING, COLOR_ONLINE_TEXT);
+            lblOnlineTitle = pOnline.Controls[1] as Label;
+            lblOnline = pOnline.Controls[2] as Label;
             panelStats.Controls.Add(pOnline);
-            x += 160;
 
-            var pOffline = new Panel { Width = 150, Height = 55, Location = new Point(x, 8), BackColor = COLOR_SURFACE };
-            pOffline.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 4, BackColor = COLOR_BTN_DELETE });
-            lblOfflineTitle = new Label { Text = _loc.Get("Offline"), ForeColor = COLOR_TEXT_MUTED, Font = new Font("Segoe UI", 8F, FontStyle.Bold), Location = new Point(12, 6), AutoSize = true };
-            pOffline.Controls.Add(lblOfflineTitle);
-            lblOffline = new Label { Text = "0", Font = new Font("Segoe UI", 18F, FontStyle.Bold), ForeColor = COLOR_OFFLINE_TEXT, Location = new Point(12, 24), AutoSize = true };
-            pOffline.Controls.Add(lblOffline);
+            // Offline
+            var pOffline = CreateStatBox(_loc.Get("Offline"), "0", COLOR_BTN_DELETE, COLOR_OFFLINE_TEXT);
+            lblOfflineTitle = pOffline.Controls[1] as Label;
+            lblOffline = pOffline.Controls[2] as Label;
             panelStats.Controls.Add(pOffline);
         }
 
@@ -667,8 +800,8 @@ namespace PingMonitor
                 BorderStyle = BorderStyle.None,
                 Font = new Font("Segoe UI", 10F),
                 ItemHeight = 50, // Two-line layout
-                BackColor = ThemeService.BrandColor, // Dark Navy
-                ForeColor = Color.White,
+                BackColor = ThemeService.SidebarBg, // Use correct Sidebar Bg
+                ForeColor = ThemeService.SidebarText,
                 Cursor = Cursors.Hand,
                 DrawMode = DrawMode.OwnerDrawFixed
             };
@@ -802,11 +935,12 @@ namespace PingMonitor
             if (lblSearchPlaceholder != null) lblSearchPlaceholder.Text = _loc.Get("SearchPlaceholder");
             
             if (btnAdd != null) btnAdd.Text = _loc.Get("Add");
-            if (btnRemove != null) btnRemove.Text = _loc.Get("Remove");
-            if (btnClearAll != null) btnClearAll.Text = _loc.Get("ClearAll");
-            if (btnPingNow != null) btnPingNow.Text = _loc.Get("PingNow");
+            // if (btnRemove != null) btnRemove.Text = _loc.Get("Remove");
+            // if (btnClearAll != null) btnClearAll.Text = _loc.Get("ClearAll");
+            // if (btnPingNow != null) btnPingNow.Text = _loc.Get("PingNow");
             // btnViewLogs and btnExportLog are removed from toolbar
-            if (btnImport != null) btnImport.Text = _loc.Get("Import");
+            // Ensure Text is empty for custom painted buttons to prevent double drawing
+            if (btnImport != null) { btnImport.Tag = _loc.Get("Import"); btnImport.Text = ""; btnImport.Invalidate(); }
             if (btnExport != null) btnExport.Text = _loc.Get("Export");
             if (btnSettings != null) btnSettings.Text = _loc.Get("Settings");
             if (lblAuthor != null) lblAuthor.Text = _loc.Get("Author");
@@ -833,11 +967,19 @@ namespace PingMonitor
             bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
             
             // Background
-            using (var brush = new SolidBrush(isSelected ? ThemeService.BrandColorLight : ThemeService.BrandColor))
+            // Use SidebarBg for unselected, Selection (or BrandColorLight) for selected
+            // But usually SidebarBg is the base.
+            Color bgColor = isSelected ? ThemeService.Selection : ThemeService.SidebarBg;
+            // If Selection is Blue, we use it. If user preferred BrandColorLight (Slate700) for selection, keep it.
+            // Let's stick closer to the theme system: Selection = Blue. 
+            // Or better: Sidebar in Dark Mode usually highlights with a slightly lighter slate.
+            Color selectedColor = ThemeService.IsDarkMode ? ThemeService.BrandColorLight : Color.FromArgb(203, 213, 225); // Slate 300
+            
+            using (var brush = new SolidBrush(isSelected ? selectedColor : ThemeService.SidebarBg))
                 e.Graphics.FillRectangle(brush, e.Bounds);
             
-            // Bottom border
-            using (var pen = new Pen(ThemeService.BrandColorLight)) // Subtler border on dark
+            // Bottom border - Optional, maybe remove or match theme
+            using (var pen = new Pen(ThemeService.Border)) 
                 e.Graphics.DrawLine(pen, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
 
             string rawText = lbUsers.Items[e.Index].ToString();
@@ -866,7 +1008,7 @@ namespace PingMonitor
 
             // Line 1: Display name (bold, larger)
             string displayName = string.IsNullOrEmpty(userName) ? _loc.Get("All") : userName;
-            using (var brush = new SolidBrush(Color.White)) // Always White on Dark
+            using (var brush = new SolidBrush(ThemeService.SidebarText)) // Dynamic Text Color
                 e.Graphics.DrawString(displayName, new Font("Segoe UI", 10F, FontStyle.Bold), brush, e.Bounds.X + 12, e.Bounds.Y + 6);
 
             // Line 2: Badges
@@ -878,7 +1020,9 @@ namespace PingMonitor
             string totalText = $"{totalLabel}: {total}";
             
             // Total Badge: Slate 700 BG (BrandColorLight), White Text
-            DrawBadge(e.Graphics, totalText, ThemeService.BrandColorLight, Color.White, badgeX, badgeY);
+            // Fix: Use dynamic text color for badge (White on Dark, Dark on Light)
+            var badgeTextCol = ThemeService.IsDarkMode ? Color.White : ThemeService.BrandColor;
+            DrawBadge(e.Graphics, totalText, ThemeService.BrandColorLight, badgeTextCol, badgeX, badgeY);
             
             // Adjust X
             var totalWidth = e.Graphics.MeasureString(totalText, new Font("Segoe UI", 8F)).Width + 15;
@@ -1301,7 +1445,7 @@ namespace PingMonitor
                 form.Size = new Size(500, 420);
                 form.StartPosition = FormStartPosition.CenterParent;
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
-                form.BackColor = COLOR_BACKGROUND;
+                form.BackColor = ThemeService.IsDarkMode ? ThemeService.Background : ThemeService.SidebarBg; // Contrast
                 form.MaximizeBox = false;
 
                 int y = 20;
@@ -1309,18 +1453,18 @@ namespace PingMonitor
                 int inputWidth = 320;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_Group"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var cboGroup = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, DropDownStyle = ComboBoxStyle.DropDown };
+                var cboGroup = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, DropDownStyle = ComboBoxStyle.DropDown };
                 cboGroup.Items.AddRange(new[] { "Điện thoại", "Máy tính", "Laptop", "Camera IP", "Khác" });
                 form.Controls.Add(cboGroup);
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_Name"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtName = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN };
+                var txtName = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN };
                 form.Controls.Add(txtName);
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_Image"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtImage = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth - 80, 25), Font = new Font("Segoe UI", 9F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, ReadOnly = true };
+                var txtImage = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth - 80, 25), Font = new Font("Segoe UI", 9F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, ReadOnly = true };
                 form.Controls.Add(txtImage);
                 var btnBrowse = CreateButton(_loc.Get("Btn_Browse"), Color.FromArgb(80, 80, 80), new Point(inputX + inputWidth - 70, y), new Size(70, 25));
                 btnBrowse.Click += (s, ev) => { using (var ofd = new OpenFileDialog()) { ofd.Filter = "Images (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"; if (ofd.ShowDialog() == DialogResult.OK) txtImage.Text = ofd.FileName; } };
@@ -1328,27 +1472,29 @@ namespace PingMonitor
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_IP"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtIp = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN };
+                var txtIp = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN };
                 form.Controls.Add(txtIp);
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_MAC"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtMac = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN };
+                var txtMac = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN };
                 form.Controls.Add(txtMac);
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_Serial"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtSerial = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN };
+                var txtSerial = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN };
                 form.Controls.Add(txtSerial);
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_User"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtUser = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN };
+                var txtUser = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, DropDownStyle = ComboBoxStyle.DropDown };
+                txtUser.Items.AddRange(ipList.Select(x => x.User).Where(u => !string.IsNullOrEmpty(u)).Distinct().OrderBy(u => u).ToArray());
                 form.Controls.Add(txtUser);
                 y += 35;
 
                 form.Controls.Add(new Label { Text = _loc.Get("Lbl_Location"), ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
-                var txtLoc = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN };
+                var txtLoc = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, DropDownStyle = ComboBoxStyle.DropDown };
+                txtLoc.Items.AddRange(ipList.Select(x => x.Location).Where(l => !string.IsNullOrEmpty(l)).Distinct().OrderBy(l => l).ToArray());
                 form.Controls.Add(txtLoc);
                 y += 50;
 
@@ -1392,48 +1538,48 @@ namespace PingMonitor
                 form.Size = new Size(500, 420);
                 form.StartPosition = FormStartPosition.CenterParent;
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
-                form.BackColor = COLOR_BACKGROUND;
+                form.BackColor = ThemeService.IsDarkMode ? ThemeService.Background : ThemeService.SidebarBg; // Contrast
                 form.MaximizeBox = false;
 
                 int y = 20; int inputX = 140; int inputWidth = 320;
                 void AddLabel(string text) => form.Controls.Add(new Label { Text = text, ForeColor = COLOR_TEXT_MAIN, Location = new Point(20, y + 3), AutoSize = true });
 
                 AddLabel(_loc.Get("Lbl_Group"));
-                var cboGroup = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, DropDownStyle = ComboBoxStyle.DropDown, Text = ip.DeviceGroup };
+                var cboGroup = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, DropDownStyle = ComboBoxStyle.DropDown, Text = ip.DeviceGroup };
                 cboGroup.Items.AddRange(new[] { "Điện thoại", "Máy tính", "Laptop", "Camera IP", "Khác" });
                 form.Controls.Add(cboGroup); y += 35;
 
                 AddLabel(_loc.Get("Lbl_Name"));
-                var txtName = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, Text = ip.DeviceName };
+                var txtName = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, Text = ip.DeviceName };
                 form.Controls.Add(txtName); y += 35;
 
                 AddLabel(_loc.Get("Lbl_Image"));
-                var txtImage = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth - 80, 25), Font = new Font("Segoe UI", 9F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, ReadOnly = true, Text = ip.ImagePath };
+                var txtImage = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth - 80, 25), Font = new Font("Segoe UI", 9F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, ReadOnly = true, Text = ip.ImagePath };
                 form.Controls.Add(txtImage);
                 var btnBrowse = CreateButton("...", Color.FromArgb(80, 80, 80), new Point(inputX + inputWidth - 70, y), new Size(70, 25));
                 btnBrowse.Click += (s, ev) => { using (var ofd = new OpenFileDialog()) { ofd.Filter = "Images (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"; if (ofd.ShowDialog() == DialogResult.OK) txtImage.Text = ofd.FileName; } };
                 form.Controls.Add(btnBrowse); y += 35;
 
                 AddLabel(_loc.Get("Lbl_IP"));
-                var txtIp = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, ReadOnly = true, Text = ip.IpAddress };
+                var txtIp = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, ReadOnly = true, Text = ip.IpAddress };
                 form.Controls.Add(txtIp); y += 35;
 
                 AddLabel(_loc.Get("Lbl_MAC"));
-                var txtMac = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, Text = ip.MacAddress };
+                var txtMac = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Consolas", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, Text = ip.MacAddress };
                 form.Controls.Add(txtMac); y += 35;
 
                 AddLabel(_loc.Get("Lbl_Serial"));
-                var txtSerial = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, Text = ip.Serial };
+                var txtSerial = new TextBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, Text = ip.Serial };
                 form.Controls.Add(txtSerial); y += 35;
 
                 AddLabel("User:");
-                var txtUser = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, Text = ip.User, DropDownStyle = ComboBoxStyle.DropDown };
+                var txtUser = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, Text = ip.User, DropDownStyle = ComboBoxStyle.DropDown };
                 // Populate distinct users
                 txtUser.Items.AddRange(ipList.Select(x => x.User).Where(u => !string.IsNullOrEmpty(u)).Distinct().OrderBy(u => u).ToArray());
                 form.Controls.Add(txtUser); y += 35;
 
                 AddLabel(_loc.Get("Lbl_Location"));
-                var txtLoc = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = COLOR_BACKGROUND, ForeColor = COLOR_TEXT_MAIN, Text = ip.Location, DropDownStyle = ComboBoxStyle.DropDown };
+                var txtLoc = new ComboBox { Location = new Point(inputX, y), Size = new Size(inputWidth, 25), Font = new Font("Segoe UI", 10F), BackColor = ThemeService.IsDarkMode ? ThemeService.Background : Color.White, ForeColor = COLOR_TEXT_MAIN, Text = ip.Location, DropDownStyle = ComboBoxStyle.DropDown };
                 // Populate distinct locations
                 txtLoc.Items.AddRange(ipList.Select(x => x.Location).Where(l => !string.IsNullOrEmpty(l)).Distinct().OrderBy(l => l).ToArray());
                 form.Controls.Add(txtLoc); y += 45;

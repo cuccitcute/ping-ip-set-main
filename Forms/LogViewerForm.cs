@@ -23,6 +23,25 @@ namespace PingMonitor.Forms
 
             InitializeUI();
             LoadLogs();
+
+            
+            ThemeService.OnThemeChanged += ApplyTheme;
+            this.FormClosed += (s, e) => ThemeService.OnThemeChanged -= ApplyTheme;
+            ApplyTheme(); // Initial apply
+        }
+
+        private void ApplyTheme()
+        {
+            this.BackColor = ThemeService.Background;
+            if (dgvLogs != null)
+            {
+                dgvLogs.BackgroundColor = ThemeService.Background;
+                dgvLogs.ColumnHeadersDefaultCellStyle.BackColor = ThemeService.BtnPrimary;
+                dgvLogs.DefaultCellStyle.BackColor = ThemeService.Surface;
+                dgvLogs.DefaultCellStyle.ForeColor = ThemeService.TextMain;
+                dgvLogs.DefaultCellStyle.SelectionBackColor = ThemeService.Selection;
+                dgvLogs.DefaultCellStyle.SelectionForeColor = Color.White;
+            }
         }
 
         private void InitializeUI()
@@ -58,7 +77,7 @@ namespace PingMonitor.Forms
                 BackColor = ThemeService.Surface,
                 ForeColor = ThemeService.TextMain,
                 SelectionBackColor = ThemeService.Selection,
-                SelectionForeColor = Color.Black
+                SelectionForeColor = Color.White
             };
 
             // Define columns

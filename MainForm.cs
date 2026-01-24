@@ -65,6 +65,9 @@ namespace PingMonitor
                 UpdateSidebar(); // Ensure sidebar is populated before ping
                 await RefreshAllPings();
             };
+            
+            ThemeService.OnThemeChanged += ApplyTheme;
+            this.FormClosed += (s, e) => ThemeService.OnThemeChanged -= ApplyTheme;
         }
 
         // ============================================
